@@ -34,11 +34,15 @@ install the required library:
 - bot.load_extension("role_flair")
 
 make sure your bot has the manage roles permission
+
 ////////////////////////////////////////////////////
+
 file overview
 
 role_flair.py — handles the flair command logic, including dropdowns, hex color input, role creation, and cleanup.
+
 ////////////////////////////////////////////////////
+
 credits:
 
 made for vix’s server by friends, with love and lots of monsters and dr pepper
