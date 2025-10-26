@@ -19,6 +19,7 @@ when the user selects or types a color:
 the bot creates a new role with that color
 the bot removes any old color role belonging to the user
 ////////////////////////////////////////////////////
+
 example usage:
 /flair
 
