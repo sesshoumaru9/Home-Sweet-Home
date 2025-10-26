@@ -15,6 +15,7 @@ async def run_bot():
     await discord_bot.start("YOUR_BOT_TOKEN_HERE")
 
 def main():
+    print("Running bot...")
     asyncio.run(run_bot())
 
 if __name__ == "__main__":
