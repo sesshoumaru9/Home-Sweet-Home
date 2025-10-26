@@ -44,9 +44,9 @@ commands:
 setup instructions:
 install the required library:
 - pip install discord.py
-- add the role_flair.py file to your bot’s directory
+- add the rolecolorflairs_hsh.py file to your bot’s directory
 - import and load it in your main bot file:
-- bot.load_extension("role_flair")
+- bot.load_extension("rolecolorflairs_hsh.py")
 
 make sure your bot has the manage roles permission
 
