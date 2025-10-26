@@ -44,7 +44,7 @@ make sure your bot has the manage roles permission
 
 file overview
 
-role_flair.py — handles the flair command logic, including dropdowns, hex color input, role creation, and cleanup.
+role_flair.py, handles the flair command logic, including dropdowns, hex color input, role creation, and cleanup.
 
 ////////////////////////////////////////////////////
 
