@@ -8,7 +8,9 @@ features:
 - automatically deletes your previous color role to avoid clutter
 - beginner-friendly code with clear comments and modular design
 - optional command cooldowns to prevent spam
+  
 ////////////////////////////////////////////////////
+
 how it works:
 
 when a user runs the /flair command, the bot sends an interactive message
@@ -18,6 +20,7 @@ a text input option for entering a custom hex code
 when the user selects or types a color:
 the bot creates a new role with that color
 the bot removes any old color role belonging to the user
+
 ////////////////////////////////////////////////////
 
 example usage:
@@ -25,7 +28,9 @@ example usage:
 
 select your favorite color or enter a hex code like #ff69b4 for pink.
 the bot updates your role color instantly.
+
 ////////////////////////////////////////////////////
+
 setup instructions:
 install the required library:
 - pip install discord.py
