@@ -42,6 +42,7 @@ commands:
 ////////////////////////////////////////////////////
 
 setup instructions:
+
 install the required library:
 - pip install discord.py
 - add the rolecolorflairs_hsh.py file to your bot’s directory
@@ -54,7 +55,7 @@ make sure your bot has the manage roles permission
 
 file overview
 
-role_flair.py, handles the flair command logic, including dropdowns, hex color input, role creation, and cleanup.
+rolecolorflairs_hsh.py, handles the flair command logic, including dropdowns, hex color input, role creation, and cleanup.
 
 ////////////////////////////////////////////////////
 
