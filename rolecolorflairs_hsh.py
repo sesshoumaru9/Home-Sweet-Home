@@ -10,15 +10,15 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # --- color options dictionary (easy to edit later) ---
 colors = {
-    "Red": "❤️",
-    "Orange": "🧡",
-    "Yellow": "💛",
-    "Green": "💚",
-    "Blue": "💙",
-    "Purple": "💜",
-    "Pink": "🌸",
-    "White": "🤍",
-    "Black": "🖤",
+    "red": "❤️",
+    "orange": "🧡",
+    "yellow": "💛",
+    "green": "💚",
+    "blue": "💙",
+    "purple": "💜",
+    "pink": "🌸",
+    "white": "🤍",
+    "black": "🖤",
 }
 
 
@@ -174,3 +174,4 @@ async def flair_error(ctx: commands.Context, error):
 
 # ---------- RUN ----------
 bot.run("YOUR_BOT_TOKEN_HERE")
+
