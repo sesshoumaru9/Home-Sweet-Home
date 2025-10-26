@@ -32,6 +32,7 @@ the bot updates your role color instantly.
 ////////////////////////////////////////////////////
 
 commands:
+
 !flair - changes your role based on the parameters above 
 
 !listflairs - lists all flairs
