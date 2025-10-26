@@ -24,10 +24,17 @@ the bot removes any old color role belonging to the user
 ////////////////////////////////////////////////////
 
 example usage:
-/flair
+!flair pink princess | #ff66cc
 
-select your favorite color or enter a hex code like #ff69b4 for pink.
+changes your role to be called "pink princess" and adding the hexcode "#ff66cc" changes the role color to pink.
 the bot updates your role color instantly.
+
+////////////////////////////////////////////////////
+
+commands:
+!flair - changes your role based on the parameters above 
+!listflairs - lists all flairs
+!removeflair - removes your current flair
 
 ////////////////////////////////////////////////////
 
