@@ -11,4 +11,8 @@ class DiscordBot(discord.Client):
         super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
 
+    async def on_ready(self):
+        print("Discord bot is ready")
+        await self.tree.sync()
+
 bot = DiscordBot()
