@@ -1,159 +1,167 @@
-from typing import Union
+import re
+from typing import Optional, List
 import discord
+from discord import app_commands
 from discord.ext import commands
 from hsh_bot.api import DiscordCommand, Command
 
-class Flair(DiscordCommand):
+
 # --- color options dictionary (easy to edit later) ---
-    colors = {
-        "Red": "❤️",
-        "Orange": "🧡",
-        "Yellow": "💛",
-        "Green": "💚",
-        "Blue": "💙",
-        "Purple": "💜",
-        "Pink": "🌸",
-        "White": "🤍",
-        "Black": "🖤",
-    }
+# This needs to be global for the choices to work
+colors = {
+    "red": discord.Color.red(),
+    "orange": discord.Color.orange(),
+    "yellow": discord.Color.yellow(),
+    "green": discord.Color.green(),
+    "blue": discord.Color.blue(),
+    "purple": discord.Color.purple(),
+    "pink": discord.Color.pink(),
+    "teal": discord.Color.teal(),
+    "gold": discord.Color.gold(),
+    "magenta": discord.Color.magenta(),
+}
+
+class Flair(DiscordCommand):
+    HEX_COLOR_RE = re.compile(r"^#?[1-9a-fA-F]{6}$")
+
+    def valid_hex_color(self, hex: str) -> bool:
+        return bool(self.HEX_COLOR_RE.fullmatch(hex))
 
     def user_commands(self):
         return [
             Command(
-                "flair",
-                "Change your username color and role",
-                self.flair
+                name="flair-set",
+                description="Change your username color and role",
+                callback=self.flair
             ),
             Command(
-                "remove-flair",
-                "Remove your current username color and role",
-                self.removeflair
+                name="flair-remove",
+                description="Remove your current username color and role",
+                callback=self.removeflair
             ),
             Command(
-                "list-flairs",
-                "List the current flairs in the server",
-                self.listflairs
+                name="flair-list",
+                description="List the current flairs in the server",
+                callback=self.listflairs
             )
         ]
 
-    async def flair(self, ctx: commands.Context, *, title_and_color: Union[str, None] = None):
+    @app_commands.describe(
+        role_name="Name of the color role (maximum 15 characters)",
+        color_name="Choose a generic color",
+        color_hex="Input a hexadecimal color code"
+    )
+    @app_commands.choices(
+        color_name=[app_commands.Choice(name=c, value=c) for c in list(colors.keys())]
+    )
+    async def flair(self, interaction: discord.Interaction, role_name: app_commands.Range[str, 1, 15], color_name: Optional[str], color_hex: Optional[str]):
         """
         Examples:
-        !flair drifting soul
-        !flair drifting soul | #ff66cc
+        /flair drifting soul red
+        /flair drifting soul #ff66cc
         """
-        member = ctx.author
-        # user used hex code
-        if title_and_color and "|" in title_and_color:
-            title, color_text = [x.strip() for x in title_and_color.split("|", 1)]
+        if not interaction.guild:
+            await interaction.response.send_message("You must run this command within a discord server", ephemeral=True)
+            return
 
-            if not color_text.startswith("#") or len(color_text) not in (4, 7):
-                return await ctx.send("please use a valid hex color (like #ff66cc)")
+        role_name = f"✨ {role_name}"
+        color_role = discord.utils.get(interaction.guild.roles, name=role_name)
 
-            try:
-                hex_value = int(color_text[1:], 16)
-                color = discord.Color(hex_value)
-            except ValueError:
-                return await ctx.send("couldn't read that color code")
+        if color_role and (color_name or color_hex):
+            await interaction.response.send_message("Do not specify a color name or color hex code for roles that already exist", ephemeral=True)
+            return
 
-            # remove their old flair if it exists
-            for role in member.roles:
-                if role.name.startswith("✨"):
-                    member_count = sum(1 for m in ctx.guild.members if role in m.roles)
-                    await member.remove_roles(role)
-                    if member_count <= 1:
-                        try:
-                            await role.delete()
-                        except discord.Forbidden:
-                            pass
+        if not color_name and not color_hex and not color_role:
+            await interaction.response.send_message("Existing color role not found.", ephemeral=True)
+            return
 
-            new_role = await ctx.guild.create_role(
-                name=f"✨ {title}",
+        if color_name and color_hex:
+            await interaction.response.send_message("You must choose either color name or color hex code, not both", ephemeral=True)
+            return
+
+        if color_hex and not self.valid_hex_color(color_hex):
+            await interaction.response.send_message("Hex color is not in the format of `#FFFFFF` or `FFFFFF`", ephemeral=True)
+            return
+
+        member = interaction.user
+        if not member or not isinstance(member, discord.Member):
+            return
+
+        color = None
+        if color_name:
+            # user used named color
+            color = colors[color_name]
+
+        if color_hex:
+            color_code = int(color_hex.lstrip('#'), 16)
+            color = discord.Color(color_code)
+
+        if not color_role:
+            if not color:
+                await interaction.response.send_message("Failed to create the specified color", ephemeral=True)
+                return
+
+            color_role = await interaction.guild.create_role(
+                name=role_name,
                 color=color,
                 permissions=discord.Permissions.none(),
             )
-            await member.add_roles(new_role)
-            return await ctx.send(f"✨ created **{title}** with color {color_text}!")
 
-        # no hex → open dropdown
-        if title_and_color:
-            title = title_and_color.strip()
-        else:
-            return await ctx.send("use `!flair title` or `!flair title | #hexcolor`")
+            await color_role.edit(position=interaction.guild.me.top_role.position)
 
-        view = ColorSelectView(title)
-        await ctx.send(f"choose a color for **{title}**", view=view)
+        await interaction.response.send_message("Assigning you to your new color role", ephemeral=True)
 
-    async def removeflair(self, ctx: commands.Context):
-        member = ctx.author
+        for role in member.roles:
+            if role.name.startswith("✨"):
+                if len(role.members) == 1:
+                    await role.delete()
+                else:
+                    await member.remove_roles(role)
+
+        await member.add_roles(color_role)
+
+    async def removeflair(self, interaction: discord.Interaction):
+        member = interaction.user
+        if not isinstance(member, discord.Member):
+            await interaction.response.send_message("You must run this command in a discord server", ephemeral=True)
+            return
+
+        await interaction.response.send_message("Attempting to remove your current color role...", ephemeral=True)
+
         removed = False
         for role in member.roles:
             if role.name.startswith("✨"):
-                member_count = sum(1 for m in ctx.guild.members if role in m.roles)
-                await member.remove_roles(role)
-                if member_count <= 1:
-                    try:
-                        await role.delete()
-                    except discord.Forbidden:
-                        pass
+                if len(role.members) == 1:
+                    await role.delete()
+                else:
+                    await member.remove_roles(role)
+
                 removed = True
+
         if removed:
-            await ctx.send("your flair was removed")
+            await interaction.followup.send("Your color role has been removed.", ephemeral=True)
         else:
-            await ctx.send("you don't have one")
+            await interaction.followup.send("You currently do not have a color role.", ephemeral=True)
 
-    async def listflairs(self, ctx: commands.Context):
-        flairs = [r.name for r in ctx.guild.roles if r.name.startswith("✨")]
-        if flairs:
-            await ctx.send("✨ current flairs:\n" + "\n".join(flairs))
-        else:
-            await ctx.send("no flairs exist yet")
+    async def listflairs(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            return
 
+        await interaction.response.send_message("Generating flair list...", ephemeral=True)
 
-# ---------- COLOR SELECT DROPDOWN ----------
+        flair_roles = [r for r in interaction.guild.roles if r.name.startswith("✨")]
+        if not flair_roles:
+            await interaction.followup.send("No color flairs exist yet.", ephemeral=True)
+            return
 
-class ColorSelect(discord.ui.Select):
-    def __init__(self, title: str):
-        # Build options dynamically from the colors dictionary
-        options = [
-            discord.SelectOption(label=color, emoji=emoji)
-            for color, emoji in colors.items()
-        ]
-        super().__init__(placeholder="pick a color", options=options)
-        self.title = title
+        embeds = []
+        for role in flair_roles:
+            color = role.color
+            name = role.name.lstrip("✨ ")
+            embed = discord.Embed(
+                description=name,
+                color=color
+            )
+            embeds.append(embed)
 
-    async def callback(self, interaction: discord.Interaction):
-        member = interaction.user
-        guild = interaction.guild
-
-        # Remove and clean up old flair roles
-        for role in member.roles:
-            if role.name.startswith("✨"):
-                member_count = sum(1 for m in guild.members if role in m.roles)
-                await member.remove_roles(role)
-                if member_count <= 1:
-                    try:
-                        await role.delete()
-                    except discord.Forbidden:
-                        pass
-
-        color_name = self.values[0].lower()
-        color = getattr(discord.Color, color_name)()
-
-        new_role = await guild.create_role(
-            name=f"✨ {self.title}",
-            color=color,
-            permissions=discord.Permissions.none(),
-        )
-        await member.add_roles(new_role)
-
-        await interaction.response.edit_message(
-            content=f"✨ you now have **{self.title}** in {color_name}!", view=None
-        )
-
-
-class ColorSelectView(discord.ui.View):
-    def __init__(self, title: str):
-        super().__init__()
-        self.add_item(ColorSelect(title))
-
+        await interaction.followup.send(embeds=embeds, ephemeral=True)
